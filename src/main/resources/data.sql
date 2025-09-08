@@ -1,265 +1,179 @@
--- MUSINSA 카테고리 초기 데이터
--- 데이터가 없을 때만 실행되도록 조건부 삽입
--- ID는 자동 생성되도록 하여 JPA와 충돌 방지
+-- MUSINSA 스타일 카테고리 초기 데이터 (최종 간소화 버전)
+-- store 관련 필드들 제거됨
 
--- 대분류 카테고리 - ID 자동 생성
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '남성', '남성 의류 및 잡화', NULL, TRUE
-WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = '남성' AND parent_id IS NULL);
+-- 대분류 카테고리 (무신사 메인 카테고리들)
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '상의', '상의 카테고리', NULL, TRUE, '001', 1, 'A', ''
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '001');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '여성', '여성 의류 및 잡화', NULL, TRUE
-WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = '여성' AND parent_id IS NULL);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '아우터', '아우터 카테고리', NULL, TRUE, '002', 2, 'A', ''
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '002');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '키즈', '아동 의류 및 잡화', NULL, TRUE
-WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = '키즈' AND parent_id IS NULL);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '바지', '바지 카테고리', NULL, TRUE, '003', 3, 'A', ''
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '003');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '신발', '모든 종류의 신발', NULL, TRUE
-WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = '신발' AND parent_id IS NULL);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title, store_code)
+SELECT '신발', '신발 카테고리', NULL, TRUE, '103', 4, 'A', '', 'sneaker'
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '103');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '액세서리', '가방, 지갑, 시계 등', NULL, TRUE
-WHERE NOT EXISTS (SELECT 1 FROM categories WHERE name = '액세서리' AND parent_id IS NULL);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '가방', '가방 카테고리', NULL, TRUE, '004', 5, 'A', ''
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '004');
 
--- 남성 중분류 - 부모 ID를 동적으로 찾아서 삽입
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '상의', '남성 상의', p.id, TRUE
-FROM categories p
-WHERE p.name = '남성' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '상의' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title, store_code)
+SELECT '뷰티', '뷰티 카테고리', NULL, TRUE, '104', 6, 'A', '', 'beauty'
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '104');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '하의', '남성 하의', p.id, TRUE
-FROM categories p
-WHERE p.name = '남성' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '하의' AND c.parent_id = p.id
-);
+-- 상의 하위 카테고리
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '반소매 티셔츠', '반소매 티셔츠', p.id, TRUE, '001001', 1, 'A', ''
+FROM categories p WHERE p.code = '001'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '001001');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '아우터', '남성 아우터', p.id, TRUE
-FROM categories p
-WHERE p.name = '남성' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '아우터' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '셔츠/블라우스', '셔츠/블라우스', p.id, TRUE, '001002', 2, 'A', ''
+FROM categories p WHERE p.code = '001'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '001002');
 
--- 남성 상의 소분류
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '티셔츠', '남성 티셔츠', p.id, TRUE
-FROM categories p
-WHERE p.name = '상의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '티셔츠' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '피케/카라 티셔츠', '피케/카라 티셔츠', p.id, TRUE, '001003', 3, 'A', ''
+FROM categories p WHERE p.code = '001'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '001003');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '셔츠', '남성 셔츠', p.id, TRUE
-FROM categories p
-WHERE p.name = '상의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '셔츠' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '후드 티셔츠', '후드 티셔츠', p.id, TRUE, '001004', 4, 'A', ''
+FROM categories p WHERE p.code = '001'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '001004');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '니트/스웨터', '남성 니트/스웨터', p.id, TRUE
-FROM categories p
-WHERE p.name = '상의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '니트/스웨터' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '맨투맨/스웨트', '맨투맨/스웨트', p.id, TRUE, '001005', 5, 'A', ''
+FROM categories p WHERE p.code = '001'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '001005');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '후드티', '남성 후드티', p.id, TRUE
-FROM categories p
-WHERE p.name = '상의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '후드티' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '니트/스웨터', '니트/스웨터', p.id, TRUE, '001006', 6, 'A', ''
+FROM categories p WHERE p.code = '001'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '001006');
 
--- 남성 하의 소분류
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '진', '남성 청바지', p.id, TRUE
-FROM categories p
-WHERE p.name = '하의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '진' AND c.parent_id = p.id
-);
+-- 아우터 하위 카테고리
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '블루종/MA-1', '블루종/MA-1', p.id, TRUE, '002001', 1, 'A', ''
+FROM categories p WHERE p.code = '002'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '002001');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '팬츠', '남성 팬츠', p.id, TRUE
-FROM categories p
-WHERE p.name = '하의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '팬츠' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '레더/라이더스 재킷', '레더/라이더스 재킷', p.id, TRUE, '002002', 2, 'A', ''
+FROM categories p WHERE p.code = '002'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '002002');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '반바지', '남성 반바지', p.id, TRUE
-FROM categories p
-WHERE p.name = '하의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '반바지' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '후드 집업', '후드 집업', p.id, TRUE, '002022', 3, 'A', ''
+FROM categories p WHERE p.code = '002'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '002022');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '조거팬츠', '남성 조거팬츠', p.id, TRUE
-FROM categories p
-WHERE p.name = '하의' AND p.parent_id = (SELECT id FROM categories WHERE name = '남성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '조거팬츠' AND c.parent_id = p.id
-);
+-- 바지 하위 카테고리
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '데님 팬츠', '데님 팬츠', p.id, TRUE, '003002', 1, 'A', ''
+FROM categories p WHERE p.code = '003'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '003002');
 
--- 여성 중분류
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '상의', '여성 상의', p.id, TRUE
-FROM categories p
-WHERE p.name = '여성' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '상의' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '트레이닝/조거 팬츠', '트레이닝/조거 팬츠', p.id, TRUE, '003004', 2, 'A', ''
+FROM categories p WHERE p.code = '003'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '003004');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '하의', '여성 하의', p.id, TRUE
-FROM categories p
-WHERE p.name = '여성' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '하의' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '코튼 팬츠', '코튼 팬츠', p.id, TRUE, '003007', 3, 'A', ''
+FROM categories p WHERE p.code = '003'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '003007');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '원피스', '여성 원피스', p.id, TRUE
-FROM categories p
-WHERE p.name = '여성' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '원피스' AND c.parent_id = p.id
-);
+-- 신발 하위 카테고리 (품목별 그룹)
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '스니커즈', '스니커즈', p.id, TRUE, '103004', 1, 'A', '품목별'
+FROM categories p WHERE p.code = '103'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '103004');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '아우터', '여성 아우터', p.id, TRUE
-FROM categories p
-WHERE p.name = '여성' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '아우터' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '부츠/워커', '부츠/워커', p.id, TRUE, '103002', 2, 'A', '품목별'
+FROM categories p WHERE p.code = '103'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '103002');
 
--- 여성 상의 소분류
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '티셔츠', '여성 티셔츠', p.id, TRUE
-FROM categories p
-WHERE p.name = '상의' AND p.parent_id = (SELECT id FROM categories WHERE name = '여성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '티셔츠' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '구두', '구두', p.id, TRUE, '103001', 3, 'A', '품목별'
+FROM categories p WHERE p.code = '103'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '103001');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '블라우스', '여성 블라우스', p.id, TRUE
-FROM categories p
-WHERE p.name = '상의' AND p.parent_id = (SELECT id FROM categories WHERE name = '여성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '블라우스' AND c.parent_id = p.id
-);
+-- 신발 인기 라인업 그룹
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '나이키 에어포스 1', '나이키 에어포스 1', p.id, TRUE, '103008', 1, 'A', '인기 라인업'
+FROM categories p WHERE p.code = '103'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '103008');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '니트/가디건', '여성 니트/가디건', p.id, TRUE
-FROM categories p
-WHERE p.name = '상의' AND p.parent_id = (SELECT id FROM categories WHERE name = '여성' AND parent_id IS NULL)
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '니트/가디건' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '아디다스 삼바 OG', '아디다스 삼바 OG', p.id, TRUE, '103009', 2, 'A', '인기 라인업'
+FROM categories p WHERE p.code = '103'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '103009');
 
--- 신발 중분류
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '스니커즈', '운동화/스니커즈', p.id, TRUE
-FROM categories p
-WHERE p.name = '신발' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '스니커즈' AND c.parent_id = p.id
-);
+-- 가방 하위 카테고리
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '백팩', '백팩', p.id, TRUE, '004001', 1, 'A', ''
+FROM categories p WHERE p.code = '004'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '004001');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '구두', '정장구두/구두', p.id, TRUE
-FROM categories p
-WHERE p.name = '신발' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '구두' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '메신저/크로스 백', '메신저/크로스 백', p.id, TRUE, '004002', 2, 'A', ''
+FROM categories p WHERE p.code = '004'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '004002');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '부츠', '부츠', p.id, TRUE
-FROM categories p
-WHERE p.name = '신발' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '부츠' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '숄더백', '숄더백', p.id, TRUE, '004003', 3, 'A', ''
+FROM categories p WHERE p.code = '004'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '004003');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '샌들', '샌들/슬리퍼', p.id, TRUE
-FROM categories p
-WHERE p.name = '신발' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '샌들' AND c.parent_id = p.id
-);
+-- 뷰티 하위 카테고리
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '스킨케어', '스킨케어', p.id, TRUE, '104001', 1, 'A', ''
+FROM categories p WHERE p.code = '104'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '104001');
 
--- 액세서리 중분류
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '가방', '백팩, 토트백, 크로스백 등', p.id, TRUE
-FROM categories p
-WHERE p.name = '액세서리' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '가방' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '마스크팩', '마스크팩', p.id, TRUE, '104013', 2, 'A', ''
+FROM categories p WHERE p.code = '104'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '104013');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '시계', '손목시계, 스마트워치', p.id, TRUE
-FROM categories p
-WHERE p.name = '액세서리' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '시계' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '베이스메이크업', '베이스메이크업', p.id, TRUE, '104014', 3, 'A', ''
+FROM categories p WHERE p.code = '104'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '104014');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '지갑', '지갑, 카드지갑', p.id, TRUE
-FROM categories p
-WHERE p.name = '액세서리' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '지갑' AND c.parent_id = p.id
-);
+-- 성별별 카테고리 샘플
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '원피스/스커트', '원피스/스커트', NULL, TRUE, '100', 7, 'F', ''
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '100');
 
-INSERT INTO categories (name, description, parent_id, is_active)
-SELECT '주얼리', '목걸이, 팔찌, 반지 등', p.id, TRUE
-FROM categories p
-WHERE p.name = '액세서리' AND p.parent_id IS NULL
-AND NOT EXISTS (
-    SELECT 1 FROM categories c 
-    WHERE c.name = '주얼리' AND c.parent_id = p.id
-);
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '미니원피스', '미니원피스', p.id, TRUE, '100001', 1, 'F', ''
+FROM categories p WHERE p.code = '100'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '100001');
+
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '미디원피스', '미디원피스', p.id, TRUE, '100002', 2, 'F', ''
+FROM categories p WHERE p.code = '100'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '100002');
+
+-- 남성 전용 카테고리 추가
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '남성 정장', '남성 정장', NULL, TRUE, '200', 8, 'M', ''
+WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '200');
+
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '정장 재킷', '정장 재킷', p.id, TRUE, '200001', 1, 'M', ''
+FROM categories p WHERE p.code = '200'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '200001');
+
+INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
+SELECT '정장 바지', '정장 바지', p.id, TRUE, '200002', 2, 'M', ''
+FROM categories p WHERE p.code = '200'
+AND NOT EXISTS (SELECT 1 FROM categories WHERE code = '200002');

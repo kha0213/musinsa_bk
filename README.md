@@ -1,292 +1,230 @@
-# MUSINSA 과제 - 온라인 쇼핑몰 카테고리 시스템
+# MUSINSA 스타일 카테고리 API
 
-## 프로젝트 개요
-MUSINSA 과제를 위한 온라인 쇼핑몰의 상품 카테고리 구현 프로젝트입니다.
-트리 구조의 카테고리를 관리할 수 있는 REST API를 제공합니다.
+무신사(MUSINSA)의 카테고리 메뉴 API 구조를 참고하여 개발한 Spring Boot 기반의 카테고리 관리 시스템입니다.
 
-## 기술 스택
-- **Java 17**
-- **Spring Boot 3.5.5**
-- **Spring Data JPA**
-- **H2 Database** (메모리 DB)
-- **Gradle**
-- **Lombok** (코드 간소화)
-- **Bean Validation** (입력값 검증)
-- **SLF4J + Logback** (로깅)
+## 🚀 주요 기능
 
-## 주요 기능
+### 1. 무신사 스타일 메뉴 API
+- **엔드포인트**: `GET /api2/dp/v4/menu`
+- 무신사와 동일한 JSON 구조 제공
+- 성별 필터링 지원 (전체/남성/여성)
+- 탭 시스템 (카테고리/브랜드/서비스)
+- 계층적 카테고리 구조
 
-### [제출과제]
-✅ 온라인 쇼핑몰의 상품 카테고리를 구현하세요
+### 2. 기존 카테고리 CRUD API (하위 호환성 보장)
+- **기본 엔드포인트**: `/api/categories`
+- 전체 카테고리 조회, 생성, 수정, 삭제
+- 카테고리 트리 구조 조회
+- 검색 및 통계 기능
 
-### [개발시 반드시 포함되어야 하는 항목]
-✅ **RDBMS**: 과제 작성시 Embedded DB 사용 권장 (예: H2 DB)
-✅ **REST API**: 완전한 REST API 구현
+## 📋 API 엔드포인트
 
-### [개발시 반드시 구현되어야 하는 내용]
-✅ **카테고리 등록/수정/삭제 API**
-- 카테고리를 등록/수정/삭제 할 수 있어야 합니다
-- 카테고리 조회 시 자기 자신을 포함해 하위 카테고리 조회가 가능해야 합니다
-- 카테고리를 지정하지 않을 시, 전체 카테고리를 반환해야 합니다
-- 카테고리는 트리 구조로 반환해야 합니다
-
-✅ **카테고리 조회 API**
-- 카테고리 조회 시 자기 자신을 포함해 하위 카테고리 조회가 가능해야 합니다
-- 카테고리를 지정하지 않을 시, 전체 카테고리를 반환해야 합니다
-- 카테고리는 트리 구조로 반환해야 합니다
-
-## API 명세
-
-### HTTP 상태 코드
-| 상태 코드 | 설명 | 사용 예시 |
-|----------|------|----------|
-| `200 OK` | 성공적인 조회/수정 | GET, PUT, PATCH |
-| `201 Created` | 리소스 생성 성공 | POST |
-| `204 No Content` | 성공적인 삭제 | DELETE |
-| `400 Bad Request` | 잘못된 요청/유효성 오류 | 입력값 오류 |
-| `404 Not Found` | 리소스를 찾을 수 없음 | 존재하지 않는 ID |
-| `500 Internal Server Error` | 서버 내부 오류 | 예상치 못한 오류 |
-
-### 1. 카테고리 조회
-```bash
-# 모든 카테고리 조회
-GET /api/categories
-
-# 트리 구조로 카테고리 조회
-GET /api/categories/tree
-
-# 특정 카테고리 조회 (하위 카테고리 포함)
-GET /api/categories/{id}
-
-# 특정 부모의 자식 카테고리들 조회
-GET /api/categories/{parentId}/children
-
-# 카테고리 검색
-GET /api/categories/search?name={name}
-
-# 카테고리 통계
-GET /api/categories/statistics
+### 무신사 스타일 API
+```
+GET /api2/dp/v4/menu?tabId=category&gf=A
 ```
 
-### 2. 카테고리 등록
-```bash
-POST /api/categories
-Content-Type: application/json
-# 응답: 201 Created
+**파라미터:**
+- `tabId`: 탭 ID (category, brand, service)
+- `gf`: 성별 필터 (A: 전체, M: 남성, F: 여성)
 
+**응답 예시:**
+```json
 {
-  "name": "카테고리명",
-  "description": "카테고리 설명",
-  "parentId": 1  // 부모 카테고리 ID (선택사항)
+  "data": {
+    "list": [
+      {
+        "code": "001",
+        "title": "상의",
+        "storeCode": "",
+        "storeTitle": "",
+        "storeIconImage": "",
+        "storeLinkUrl": "",
+        "linkUrlTitle": "전체 보기",
+        "linkUrl": "/category/001",
+        "list": [
+          {
+            "title": "",
+            "list": [
+              {
+                "code": "001001",
+                "title": "반소매 티셔츠",
+                "linkUrl": "/category/001001",
+                "thumbnail": "https://image.msscdn.net/images/category_img/men/ITEM_001001_17507308412077_big.png"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "tabs": [
+      {
+        "title": "카테고리",
+        "id": "category",
+        "selected": true,
+        "isEmphasis": false
+      }
+    ],
+    "gender": [
+      {
+        "title": "전체",
+        "key": "A",
+        "selected": true
+      }
+    ]
+  },
+  "meta": {
+    "result": "SUCCESS"
+  }
 }
 ```
 
-### 3. 카테고리 수정
-```bash
-PUT /api/categories/{id}
-Content-Type: application/json
-# 응답: 200 OK
-
-{
-  "name": "수정된 카테고리명",
-  "description": "수정된 카테고리 설명",
-  "isActive": true
-}
+### 기존 카테고리 API
+```
+GET    /api/categories              # 전체 카테고리 조회
+GET    /api/categories/tree         # 트리 구조 조회
+GET    /api/categories/{id}         # 특정 카테고리 조회
+POST   /api/categories              # 카테고리 생성
+PUT    /api/categories/{id}         # 카테고리 수정
+DELETE /api/categories/{id}         # 카테고리 삭제
+GET    /api/categories/search       # 카테고리 검색
+GET    /api/categories/statistics   # 통계 조회
 ```
 
-### 4. 카테고리 삭제
-```bash
-# 논리적 삭제 (비활성화) - 204 No Content
-DELETE /api/categories/{id}
-
-# 물리적 삭제 (완전 삭제) - 204 No Content
-DELETE /api/categories/{id}/permanent
-
-# 카테고리 상태 토글 (활성화/비활성화) - 200 OK
-PATCH /api/categories/{id}/toggle-status
+### QueryDSL 테스트 API
+```
+GET    /api/test/querydsl/search    # 복합 조건 검색
+GET    /api/test/querydsl/roots     # 루트 카테고리 조회
+GET    /api/test/querydsl/count     # 활성 카테고리 개수
+GET    /api/test/querydsl/group/{groupTitle}  # 그룹별 조회
 ```
 
-## 데이터베이스 설계
+## 🛠 기술 스택
 
-### Category 테이블
+- **Framework**: Spring Boot 3.5.5
+- **Language**: Java 17
+- **Database**: H2 Database (개발용)
+- **ORM**: Spring Data JPA + QueryDSL 5.0.0
+- **Documentation**: Swagger/OpenAPI 3
+- **Build Tool**: Gradle
+- **Testing**: JUnit 5, MockMvc
+
+## 📦 설치 및 실행
+
+### 1. 프로젝트 클론
+```bash
+git clone <repository-url>
+cd musinsa2
+```
+
+### 2. 애플리케이션 실행
+```bash
+./gradlew bootRun
+```
+
+### 3. API 문서 확인
+애플리케이션 실행 후 브라우저에서 접속:
+- Swagger UI: `http://localhost:8080/swagger-ui.html`
+- API Docs: `http://localhost:8080/v3/api-docs`
+
+## 🗃 데이터베이스 스키마
+
+### categories 테이블
 ```sql
 CREATE TABLE categories (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
     description VARCHAR(500),
     parent_id BIGINT,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIME,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIME,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    
+    -- 무신사 스타일 확장 필드
+    code VARCHAR(20) UNIQUE,
+    thumbnail_url VARCHAR(500),
+    link_url VARCHAR(500),
+    store_code VARCHAR(50),
+    store_title VARCHAR(100),
+    store_icon_image VARCHAR(500),
+    store_link_url VARCHAR(500),
+    link_url_title VARCHAR(100),
+    group_title VARCHAR(100),
+    display_order INTEGER NOT NULL DEFAULT 0,
+    gender_filter VARCHAR(10) NOT NULL DEFAULT 'A',
+    
     FOREIGN KEY (parent_id) REFERENCES categories(id)
 );
 ```
 
-## 프로젝트 구조
+## 🏗 프로젝트 구조
+
 ```
 src/main/java/com/yl/musinsa2/
-├── Musinsa2Application.java          # 메인 애플리케이션 클래스
+├── controller/
+│   ├── CategoryController.java    # 기존 카테고리 API
+│   └── MenuController.java        # 무신사 스타일 메뉴 API
+├── dto/
+│   ├── MenuResponse.java          # 무신사 스타일 응답 DTO
+│   ├── CategoryResponse.java      # 카테고리 응답 DTO
+│   └── CategoryCreateRequest.java # 카테고리 생성 요청 DTO
 ├── entity/
-│   └── Category.java                 # 카테고리 엔티티
+│   └── Category.java              # 카테고리 엔티티 (확장됨)
 ├── repository/
-│   └── CategoryRepository.java       # 카테고리 레포지토리
-├── dto/
-│   ├── CategoryCreateRequest.java    # 카테고리 생성 요청 DTO
-│   ├── CategoryUpdateRequest.java    # 카테고리 수정 요청 DTO
-│   └── CategoryResponse.java         # 카테고리 응답 DTO
-├── service/
-│   └── CategoryService.java          # 카테고리 서비스
-├── controller/
-│   └── CategoryController.java       # 카테고리 컨트롤러
-└── exception/
-    └── GlobalExceptionHandler.java  # 글로벌 예외 처리
-
-src/main/resources/
-├── application.yml                # YAML 설정 파일
-├── schema.sql                     # 데이터베이스 스키마 정의
-└── data.sql                       # 초기 데이터 삽입
-
-src/test/java/
-└── service/CategoryServiceTest.java  # 단위 테스트
-```
-├── dto/
-│   ├── CategoryCreateRequest.java    # 카테고리 생성 요청 DTO
-│   ├── CategoryUpdateRequest.java    # 카테고리 수정 요청 DTO
-│   └── CategoryResponse.java         # 카테고리 응답 DTO
-├── service/
-│   └── CategoryService.java          # 카테고리 서비스
-├── controller/
-│   └── CategoryController.java       # 카테고리 컨트롤러
-├── exception/
-│   └── GlobalExceptionHandler.java  # 글로벌 예외 처리
-└── config/
-    └── DataInitializer.java          # 초기 데이터 설정
+│   └── CategoryRepository.java    # 카테고리 레포지토리
+└── service/
+    ├── CategoryService.java       # 카테고리 서비스
+    └── MenuService.java          # 메뉴 서비스
 ```
 
-## 실행 방법
+## 🔧 주요 변경사항
 
-### 1. 프로젝트 클론 및 빌드
+### 1. Category 엔티티 확장
+무신사 API 구조를 지원하기 위해 다음 필드들이 추가되었습니다:
+- `code`: 카테고리 코드
+- `storeCode`, `storeTitle`: 스토어 관련 정보
+- `groupTitle`: 그룹 제목
+- `displayOrder`: 표시 순서
+- `genderFilter`: 성별 필터 (Enum: ALL, MALE, FEMALE)
+
+### 2. 새로운 API 엔드포인트
+`/api2/dp/v4/menu` 엔드포인트가 추가되어 무신사와 동일한 구조의 응답을 제공합니다.
+
+### 3. 하위 호환성
+기존 카테고리 API는 그대로 유지되어 기존 클라이언트와의 호환성을 보장합니다.
+
+## 🧪 테스트
+
+### 단위 테스트 실행
 ```bash
-# 프로젝트 디렉토리로 이동
-cd C:\Long\musinsa2
-
-# 프로젝트 빌드
-./gradlew build
-
-# 애플리케이션 실행
-./gradlew bootRun
+./gradlew test
 ```
 
-### 2. H2 데이터베이스 콘솔 접속
-- URL: http://localhost:8080/h2-console
-- JDBC URL: `jdbc:h2:mem:testdb`
-- Username: `sa`
-- Password: (빈 문자열)
+### 통합 테스트
+`MenuControllerIntegrationTest` 클래스에서 무신사 스타일 API의 통합 테스트를 수행합니다.
 
-### 3. API 테스트
-애플리케이션이 실행되면 다음 URL에서 API를 테스트할 수 있습니다:
-- Base URL: http://localhost:8080/api/categories
+## 📝 샘플 데이터
 
-## 초기 데이터
+애플리케이션 시작시 다음과 같은 샘플 데이터가 자동으로 생성됩니다:
+- 상의 (반소매 티셔츠, 셔츠/블라우스, 후드 티셔츠 등)
+- 아우터 (블루종/MA-1, 레더/라이더스 재킷 등)
+- 바지 (데님 팬츠, 트레이닝/조거 팬츠 등)
+- 신발 (스니커즈, 부츠/워커, 구두 등)
+- 가방 (백팩, 메신저/크로스 백, 숄더백 등)
+- 뷰티 (스킨케어, 마스크팩, 베이스메이크업 등)
 
-애플리케이션 실행 시 `data.sql` 파일을 통해 **데이터가 없을 때만** 다음과 같은 카테고리 구조가 자동으로 생성됩니다:
+## 🤝 기여하기
 
-> 📝 **참고**: `spring.sql.init.mode: embedded` 설정으로 인해 H2 메모리 DB에서만 실행되며, 이미 데이터가 있으면 중복 삽입을 방지합니다.
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-```
-남성
-├── 상의
-│   ├── 티셔츠
-│   ├── 셔츠
-│   ├── 니트/스웨터
-│   └── 후드티
-├── 하의
-│   ├── 진
-│   ├── 팬츠
-│   ├── 반바지
-│   └── 조거팬츠
-└── 아우터
+## 📄 라이선스
 
-여성
-├── 상의
-│   ├── 티셔츠
-│   ├── 블라우스
-│   └── 니트/가디건
-├── 하의
-├── 원피스
-└── 아우터
+이 프로젝트는 MIT 라이선스를 따릅니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
 
-키즈
+## 🙋‍♂️ 문의
 
-신발
-├── 스니커즈
-├── 구두
-├── 부츠
-└── 샌들
-
-액세서리
-├── 가방
-├── 시계
-├── 지갑
-└── 주얼리
-```
-
-## API 사용 예시
-
-### 1. 전체 카테고리 트리 조회
-```bash
-curl -X GET "http://localhost:8080/api/categories/tree"
-```
-
-### 2. 새 카테고리 생성
-```bash
-curl -X POST "http://localhost:8080/api/categories" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "새 카테고리",
-    "description": "새로운 카테고리입니다",
-    "parentId": 1
-  }'
-```
-
-### 3. 카테고리 수정
-```bash
-curl -X PUT "http://localhost:8080/api/categories/1" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "수정된 카테고리",
-    "description": "수정된 설명",
-    "isActive": true
-  }'
-```
-
-### 4. 카테고리 검색
-```bash
-curl -X GET "http://localhost:8080/api/categories/search?name=티셔츠"
-```
-
-## 특징
-
-1. **트리 구조 지원**: 부모-자식 관계를 통한 계층적 카테고리 구조
-2. **논리적 삭제**: 데이터의 안정성을 위한 소프트 딜리트 기능
-3. **유효성 검증**: Bean Validation을 활용한 입력값 검증
-4. **예외 처리**: 글로벌 예외 처리를 통한 일관된 에러 응답
-5. **초기 데이터**: 테스트를 위한 샘플 카테고리 자동 생성
-6. **상세한 API**: CRUD 뿐만 아니라 검색, 통계, 상태 토글 등 다양한 기능
-7. **Lombok 활용**: @Data, @Builder, @RequiredArgsConstructor 등으로 보일러플레이트 코드 최소화
-8. **체계적인 로깅**: @Slf4j를 통한 구조화된 로그 관리
-9. **YAML 설정**: 가독성 좋은 application.yml 설정 파일
-10. **SQL 기반 초기화**: data.sql을 통한 체계적인 초기 데이터 관리
-11. **완전한 테스트**: 단위 테스트와 통합 테스트 포함
-
-## 문서화
-- README 에 아래 내용을 명시 해 주세요
-  - 애플리케이션을 실행하기 위해 필요한 설치 및 빌드 방법
-  - Database 명세
-  - API 명세
-  - 직접 붙여도 되고, Swagger 나 Rest Docs 를 적용했다면, 접속 방법을 명시해도 됩니다.
-
----
-
-**개발자**: MUSINSA 과제 수행자  
-**개발 기간**: +7일
+프로젝트에 대한 문의사항이 있으시면 이슈를 생성해 주세요.

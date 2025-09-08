@@ -89,6 +89,12 @@ public class CategoryService {
         Category category = Category.builder()
                 .name(request.getName())
                 .description(request.getDescription())
+                .code(request.getCode())
+                .storeCode(request.getStoreCode())
+                .storeTitle(request.getStoreTitle())
+                .groupTitle(request.getGroupTitle())
+                .displayOrder(request.getDisplayOrder())
+                .genderFilter(request.getGenderFilter())
                 .build();
         
         // 부모 카테고리가 지정된 경우

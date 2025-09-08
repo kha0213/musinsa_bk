@@ -1,16 +1,6 @@
 package com.yl.musinsa2.entity;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -45,7 +35,6 @@ public class Category extends BaseEntity {
     @Column(length = 500)
     private String description;
 
-    // 트리 구조를 위한 부모-자식 관계
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Category parent;
@@ -58,11 +47,34 @@ public class Category extends BaseEntity {
     @Builder.Default
     private Boolean isActive = true;
 
+    // 무신사 스타일 추가 필드들 (간소화됨)
+    @Column(name = "code", unique = true, length = 20)
+    private String code;
+
+    @Column(name = "store_code", length = 50)
+    private String storeCode;
+
+    @Column(name = "store_title", length = 100)
+    private String storeTitle;
+
+    @Column(name = "group_title", length = 100)
+    private String groupTitle;
+
+    @Column(name = "display_order", nullable = false)
+    @Builder.Default
+    private Integer displayOrder = 0;
+
+    @Column(name = "gender_filter", length = 10)
+    @Convert(converter = GenderFilterConverter.class)
+    @Builder.Default
+    private GenderFilter genderFilter = GenderFilter.ALL;
+
     // 편의 생성자들
     public Category(String name, String description) {
         this.name = name;
         this.description = description;
         this.isActive = true;
+        this.genderFilter = GenderFilter.ALL;
     }
 
     public Category(String name, String description, Category parent) {
@@ -89,5 +101,26 @@ public class Category extends BaseEntity {
     // 리프 카테고리인지 확인 (자식이 없는지)
     public boolean isLeaf() {
         return children.isEmpty();
+    }
+
+    // linkUrl getter - 항상 자동 생성
+    public String getLinkUrl() {
+        if (id != null) {
+            return "/category/" + id;
+        }
+        return null;
+    }
+
+    // 스토어 관련 정보들을 위한 getter들
+    public String getStoreIconImage() {
+        return null; // 제거됨
+    }
+
+    public String getStoreLinkUrl() {
+        return null; // 제거됨  
+    }
+
+    public String getLinkUrlTitle() {
+        return "전체 보기"; // 기본값 반환
     }
 }

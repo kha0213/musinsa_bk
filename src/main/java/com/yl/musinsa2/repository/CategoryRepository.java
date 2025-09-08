@@ -1,16 +1,15 @@
 package com.yl.musinsa2.repository;
 
 import com.yl.musinsa2.entity.Category;
+import com.yl.musinsa2.entity.GenderFilter;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface CategoryRepository extends JpaRepository<Category, Long> {
+public interface CategoryRepository extends JpaRepository<Category, Long>, CategoryRepositoryCustom {
     
     // 루트 카테고리(부모가 없는 카테고리) 조회
     List<Category> findByParentIsNullAndIsActiveTrue();
@@ -24,24 +23,6 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     // 이름으로 카테고리 검색
     List<Category> findByNameContainingIgnoreCaseAndIsActiveTrue(String name);
     
-    // 특정 카테고리의 모든 하위 카테고리를 재귀적으로 조회
-    @Query(value = """
-        WITH RECURSIVE category_tree AS (
-            SELECT id, name, description, parent_id, created_at, updated_at, is_active, 0 as level
-            FROM categories 
-            WHERE id = :categoryId AND is_active = true
-            
-            UNION ALL
-            
-            SELECT c.id, c.name, c.description, c.parent_id, c.created_at, c.updated_at, c.is_active, ct.level + 1
-            FROM categories c
-            INNER JOIN category_tree ct ON c.parent_id = ct.id
-            WHERE c.is_active = true
-        )
-        SELECT * FROM category_tree ORDER BY level, name
-        """, nativeQuery = true)
-    List<Category> findCategoryTreeById(@Param("categoryId") Long categoryId);
-    
     // 특정 부모 카테고리의 직접적인 자식들만 조회
     List<Category> findByParentAndIsActiveTrue(Category parent);
     
@@ -53,4 +34,13 @@ public interface CategoryRepository extends JpaRepository<Category, Long> {
     
     // 특정 부모의 자식 카테고리 개수 조회
     long countByParentIdAndIsActiveTrue(Long parentId);
+    
+    // 무신사 스타일: 성별 필터와 표시 순서로 조회
+    List<Category> findAllByIsActiveTrueAndGenderFilterOrderByDisplayOrder(GenderFilter genderFilter);
+    
+    // 코드로 카테고리 조회
+    Optional<Category> findByCodeAndIsActiveTrue(String code);
+    
+    // 표시 순서로 활성화된 카테고리 조회
+    List<Category> findByIsActiveTrueOrderByDisplayOrder();
 }
