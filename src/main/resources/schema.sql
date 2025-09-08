@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS categories (
     name VARCHAR(100) NOT NULL,
     description VARCHAR(500),
     parent_id BIGINT,
-    created_at TIMESTAMP NOT NULL,
-    updated_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIME,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIME,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (parent_id) REFERENCES categories(id)
 );
