@@ -19,7 +19,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
@@ -52,8 +52,23 @@ springdoc:
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
 
+# OpenFeign 설정
+feign:
+  client:
+    config:
+      default:
+        connect-timeout: 5000
+        read-timeout: 10000
+        logger-level: full
+  compression:
+    request:
+      enabled: true
+    response:
+      enabled: true
+
 # Logging
 logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
+    com.yl.musinsa2.client: DEBUG  # Feign 클라이언트 로그

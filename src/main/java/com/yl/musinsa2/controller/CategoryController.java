@@ -17,7 +17,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -35,7 +34,6 @@ import java.util.List;
 @Slf4j
 @RestController
 @RequestMapping("/api/categories")
-@CrossOrigin(origins = "*") // 개발용
 @RequiredArgsConstructor
 @Tag(name = "카테고리 관리", description = "온라인 쇼핑몰 카테고리 CRUD 및 관리 API")
 public class CategoryController {
@@ -44,7 +42,7 @@ public class CategoryController {
 
     @Operation(
             summary = "전체 카테고리 조회",
-            description = "시스템에 등록된 모든 활성화된 카테고리를 조회합니다. 평면적인 리스트 형태로 반환됩니다."
+            description = "시스템에 등록된 모든 활성화된 카테고리를 조회합니다."
     )
     @ApiResponses({
             @ApiResponse(
@@ -52,27 +50,7 @@ public class CategoryController {
                     description = "조회 성공",
                     content = @Content(
                             mediaType = "application/json",
-                            schema = @Schema(implementation = CategoryResponse.class),
-                            examples = @ExampleObject(
-                                    name = "성공 응답 예시",
-                                    value = """
-                                            [
-                                              {
-                                                "id": 1,
-                                                "name": "남성",
-                                                "description": "남성 의류 및 잡화",
-                                                "parentId": null,
-                                                "parentName": null,
-                                                "children": null,
-                                                "createdAt": "2024-01-15T10:30:00",
-                                                "updatedAt": "2024-01-15T10:30:00",
-                                                "isActive": true,
-                                                "root": true,
-                                                "leaf": false
-                                              }
-                                            ]
-                                            """
-                            )
+                            schema = @Schema(implementation = CategoryResponse.class)
                     )
             )
     })

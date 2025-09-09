@@ -4,6 +4,11 @@
 
 ## 🚀 주요 기능
 
+### 0. OpenFeign & QueryDSL 통합
+- **OpenFeign**: 외부 API 호출을 위한 선언적 HTTP 클라이언트
+- **QueryDSL**: 타입 안전한 SQL 쿼리 빌더
+- 통합 테스트 API 제공
+
 ### 1. 무신사 스타일 메뉴 API
 - **엔드포인트**: `GET /api2/dp/v4/menu`
 - 무신사와 동일한 JSON 구조 제공
@@ -91,6 +96,12 @@ GET    /api/categories/search       # 카테고리 검색
 GET    /api/categories/statistics   # 통계 조회
 ```
 
+### OpenFeign 테스트 API
+```
+GET    /api/posts/{id}              # 외부 API 단일 포스트 조회
+GET    /api/posts                   # 외부 API 전체 포스트 조회
+```
+
 ### QueryDSL 테스트 API
 ```
 GET    /api/test/querydsl/search    # 복합 조건 검색
@@ -99,12 +110,18 @@ GET    /api/test/querydsl/count     # 활성 카테고리 개수
 GET    /api/test/querydsl/group/{groupTitle}  # 그룹별 조회
 ```
 
+### 통합 테스트 API
+```
+GET    /api/test/integration        # QueryDSL + OpenFeign 통합 테스트
+```
+
 ## 🛠 기술 스택
 
 - **Framework**: Spring Boot 3.5.5
-- **Language**: Java 17
+- **Language**: Java 21
 - **Database**: H2 Database (개발용)
 - **ORM**: Spring Data JPA + QueryDSL 5.0.0
+- **HTTP Client**: OpenFeign (Spring Cloud)
 - **Documentation**: Swagger/OpenAPI 3
 - **Build Tool**: Gradle
 - **Testing**: JUnit 5, MockMvc
