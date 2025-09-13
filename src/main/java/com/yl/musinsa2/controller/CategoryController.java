@@ -9,14 +9,16 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -30,6 +32,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @RestController
@@ -41,74 +44,20 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @Operation(
-            summary = "전체 카테고리 조회",
-            description = "시스템에 등록된 모든 활성화된 카테고리를 조회합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            schema = @Schema(implementation = CategoryResponse.class)
-                    )
-            )
-    })
-    @GetMapping
-    public List<CategoryResponse> getAllCategories() {
-        log.info("모든 카테고리 조회 요청");
-        List<CategoryResponse> categories = categoryService.getAllCategories();
-        log.info("카테고리 {} 개 조회 완료", categories.size());
-        return categories;
-    }
-
-    @Operation(
             summary = "카테고리 트리 구조 조회",
             description = "카테고리를 계층적 트리 구조로 조회합니다. 루트 카테고리부터 시작하여 모든 하위 카테고리를 포함합니다."
     )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "트리 구조 조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "트리 구조 응답 예시",
-                                    value = """
-                                            [
-                                              {
-                                                "id": 1,
-                                                "name": "남성",
-                                                "description": "남성 의류 및 잡화",
-                                                "parentId": null,
-                                                "parentName": null,
-                                                "children": [
-                                                  {
-                                                    "id": 6,
-                                                    "name": "상의",
-                                                    "description": "남성 상의",
-                                                    "parentId": 1,
-                                                    "parentName": "남성",
-                                                    "children": null,
-                                                    "isActive": true
-                                                  }
-                                                ],
-                                                "isActive": true,
-                                                "root": true,
-                                                "leaf": false
-                                              }
-                                            ]
-                                            """
-                            )
-                    )
-            )
-    })
-    @GetMapping("/tree")
-    public List<CategoryResponse> getCategoryTree() {
+    @GetMapping
+    public ResponseEntity<List<CategoryResponse>> getCategoryTree() {
         log.info("카테고리 트리 조회 요청");
         List<CategoryResponse> categoryTree = categoryService.getCategoryTree();
         log.info("카테고리 트리 조회 완료");
-        return categoryTree;
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES)
+                        .cachePublic()
+                        .mustRevalidate())
+                .body(categoryTree);
     }
 
     @Operation(
@@ -127,23 +76,6 @@ public class CategoryController {
         CategoryResponse category = categoryService.getCategoryById(id);
         log.info("카테고리 조회 완료: {}", category.getName());
         return category;
-    }
-
-    @Operation(
-            summary = "자식 카테고리 목록 조회",
-            description = "특정 부모 카테고리의 직속 자식 카테고리들을 조회합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "자식 카테고리 조회 성공")
-    })
-    @GetMapping("/{parentId}/children")
-    public List<CategoryResponse> getChildCategories(
-            @Parameter(description = "부모 카테고리 ID", example = "1")
-            @PathVariable Long parentId) {
-        log.info("자식 카테고리 조회 요청, 부모 ID: {}", parentId);
-        List<CategoryResponse> children = categoryService.getChildCategories(parentId);
-        log.info("자식 카테고리 {} 개 조회 완료", children.size());
-        return children;
     }
 
     @Operation(
@@ -274,39 +206,108 @@ public class CategoryController {
     }
 
     @Operation(
-            summary = "카테고리 영구 삭제",
-            description = "카테고리를 데이터베이스에서 완전히 삭제합니다. 하위 카테고리가 있는 경우 삭제할 수 없습니다."
+            summary = "전체 카테고리 검색",
+            description = "모든 카테고리를 트리 구조로 반환합니다. 검색어가 있으면 해당하는 카테고리만 필터링하여 반환합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "영구 삭제 성공"),
-            @ApiResponse(responseCode = "400", description = "하위 카테고리가 존재하여 삭제 불가"),
-            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음", ref = "#/components/responses/NotFound")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "전체 트리 검색 결과",
+                                    value = """
+                                            [
+                                              {
+                                                "id": 1,
+                                                "name": "남성",
+                                                "description": "남성 의류",
+                                                "children": [
+                                                  {
+                                                    "id": 6,
+                                                    "name": "상의",
+                                                    "description": "남성 상의",
+                                                    "children": []
+                                                  }
+                                                ]
+                                              }
+                                            ]
+                                            """
+                            )
+                    )
+            )
     })
-    @DeleteMapping("/{id}/permanent")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void permanentDeleteCategory(
-            @Parameter(description = "영구 삭제할 카테고리 ID", example = "1")
-            @PathVariable Long id) {
-        log.info("카테고리 영구 삭제 요청, ID: {}", id);
-        categoryService.permanentDeleteCategory(id);
-        log.info("카테고리 영구 삭제 완료, ID: {}", id);
+    @GetMapping("/search")
+    public List<CategoryResponse> searchCategoriesTree(
+            @Parameter(description = "검색할 카테고리 이름 (선택사항)", example = "티셔츠")
+            @RequestParam(required = false) String name,
+            HttpServletResponse response) {
+        log.info("전체 카테고리 트리 검색 요청, 키워드: {}", name);
+
+        // HTTP 캐시 헤더 설정
+        response.setHeader("Cache-Control", "max-age=1800, public, must-revalidate");
+        response.setHeader("Expires", String.valueOf(System.currentTimeMillis() + 1800000)); // 30분
+
+        List<CategoryResponse> categories = categoryService.searchCategoriesTree(name);
+        log.info("전체 카테고리 트리 검색 완료, 결과 수: {}", categories.size());
+
+        return categories;
     }
 
     @Operation(
-            summary = "카테고리 검색",
-            description = "카테고리 이름으로 검색합니다. 대소문자를 구분하지 않으며 부분 일치 검색을 지원합니다."
+            summary = "특정 카테고리 하위 검색",
+            description = "특정 카테고리 ID를 기준으로 해당 카테고리와 그 하위 카테고리들을 트리 구조로 반환합니다."
     )
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "검색 성공")
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "검색 성공",
+                    content = @Content(
+                            mediaType = "application/json",
+                            examples = @ExampleObject(
+                                    name = "하위 카테고리 트리 검색 결과",
+                                    value = """
+                                            {
+                                              "id": 1,
+                                              "name": "남성",
+                                              "description": "남성 의류",
+                                              "children": [
+                                                {
+                                                  "id": 6,
+                                                  "name": "상의",
+                                                  "description": "남성 상의",
+                                                  "children": [
+                                                    {
+                                                      "id": 11,
+                                                      "name": "티셔츠",
+                                                      "children": []
+                                                    }
+                                                  ]
+                                                }
+                                              ]
+                                            }
+                                            """
+                            )
+                    )
+            ),
+            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음", ref = "#/components/responses/NotFound")
     })
-    @GetMapping("/search")
-    public List<CategoryResponse> searchCategories(
-            @Parameter(description = "검색할 카테고리 이름", example = "티셔츠")
-            @RequestParam String name) {
-        log.info("카테고리 검색 요청, 키워드: {}", name);
-        List<CategoryResponse> categories = categoryService.searchCategoriesByName(name);
-        log.info("카테고리 검색 완료, 결과 수: {}", categories.size());
-        return categories;
+    @GetMapping("/search/{categoryId}")
+    public ResponseEntity<CategoryResponse> searchCategorySubTree(
+            @Parameter(description = "기준 카테고리 ID", example = "1")
+            @PathVariable Long categoryId,
+            @Parameter(description = "검색할 카테고리 이름 (선택사항)", example = "티셔츠")
+            @RequestParam(required = false) String name) {
+        log.info("특정 카테고리 하위 트리 검색 요청, 카테고리 ID: {}, 키워드: {}", categoryId, name);
+        CategoryResponse category = categoryService.searchCategorySubTree(categoryId, name);
+        log.info("특정 카테고리 하위 트리 검색 완료: {}", category.getName());
+
+        return ResponseEntity.ok()
+                .cacheControl(CacheControl.maxAge(30, TimeUnit.MINUTES)
+                        .cachePublic()
+                        .mustRevalidate())
+                .body(category);
     }
 
     @Operation(
@@ -357,5 +358,19 @@ public class CategoryController {
         log.info("카테고리 통계 조회 완료 - 전체: {}, 루트: {}",
                 statistics.getTotalCategories(), statistics.getRootCategories());
         return statistics;
+    }
+
+    @Operation(
+            summary = "카테고리 캐시 수동 갱신",
+            description = "카테고리 캐시를 수동으로 갱신합니다. DB와 캐시 데이터 불일치 발생 시 사용할 수 있습니다."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "캐시 갱신 성공")
+    })
+    @PostMapping("/cache/refresh")
+    public void refreshCategoryCache() {
+        log.info("카테고리 캐시 수동 갱신 요청");
+        categoryService.refreshCache();
+        log.info("카테고리 캐시 수동 갱신 완료");
     }
 }

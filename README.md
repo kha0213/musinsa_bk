@@ -4,6 +4,11 @@
 
 ## 🚀 주요 기능
 
+### ✨ **최신 기능 (2025.09)**
+- **2단계 검색 시스템**: 전체 트리 검색 + 특정 카테고리 하위 검색
+- **Redis 캐시 최적화**: 1시간 TTL, 캐시 우선 조회
+- **스마트 필터링**: 계층형 트리 구조에서 재귀적 검색
+
 ### 0. OpenFeign & QueryDSL 통합
 - **OpenFeign**: 외부 API 호출을 위한 선언적 HTTP 클라이언트
 - **QueryDSL**: 타입 안전한 SQL 쿼리 빌더
@@ -92,7 +97,8 @@ GET    /api/categories/{id}         # 특정 카테고리 조회
 POST   /api/categories              # 카테고리 생성
 PUT    /api/categories/{id}         # 카테고리 수정
 DELETE /api/categories/{id}         # 카테고리 삭제
-GET    /api/categories/search       # 카테고리 검색
+GET    /api/categories/search       # 전체 카테고리 트리 검색 (검색어 선택)
+GET    /api/categories/search/{id}  # 특정 카테고리 하위 트리 검색
 GET    /api/categories/statistics   # 통계 조회
 ```
 
@@ -223,6 +229,33 @@ src/main/java/com/yl/musinsa2/
 ## 📝 샘플 데이터
 
 애플리케이션 시작시 다음과 같은 샘플 데이터가 자동으로 생성됩니다:
+
+## 🔍 **검색 기능 사용법**
+
+### 1. 전체 카테고리 트리 검색
+```bash
+# 모든 카테고리 트리 구조로 반환
+GET /api/categories/search
+
+# '티셔츠'가 포함된 카테고리만 트리 구조로 검색
+GET /api/categories/search?name=티셔츠
+```
+
+### 2. 특정 카테고리 하위 검색
+```bash
+# ID 1 카테고리의 모든 하위 카테고3리 반환
+GET /api/categories/search/1
+
+# ID 1 카테고3리 하위에서 '상의'가 포함된 카테고3리만 검색
+GET /api/categories/search/1?name=상의
+```
+
+### 3. 캐시 운영 방식
+- **캐시 우선**: 데이터가 있으면 캐시에서 조회
+- **자동 보강**: 캐시 데이터 없으면 DB에서 조회 후 캐시 저장
+- **1시간 TTL**: 데이터 유효기간 1시간 설정
+
+## 📦 샘플 데이터
 - 상의 (반소매 티셔츠, 셔츠/블라우스, 후드 티셔츠 등)
 - 아우터 (블루종/MA-1, 레더/라이더스 재킷 등)
 - 바지 (데님 팬츠, 트레이닝/조거 팬츠 등)

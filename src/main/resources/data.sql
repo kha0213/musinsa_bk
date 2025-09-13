@@ -1,7 +1,7 @@
 -- MUSINSA 스타일 카테고리 초기 데이터 (최종 간소화 버전)
 -- store 관련 필드들 제거됨
 
--- 대분류 카테고리 (무신사 메인 카테고리들)
+-- 대분류 카테고리
 INSERT INTO categories (name, description, parent_id, is_active, code, display_order, gender_filter, group_title)
 SELECT '상의', '상의 카테고리', NULL, TRUE, '001', 1, 'A', ''
 WHERE NOT EXISTS (SELECT 1 FROM categories WHERE code = '001');

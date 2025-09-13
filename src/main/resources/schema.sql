@@ -7,8 +7,7 @@ CREATE TABLE IF NOT EXISTS categories (
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIME,
     updated_at TIMESTAMP DEFAULT CURRENT_TIME,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
-    
-    -- 무신사 스타일 필드들 (간소화됨)
+
     code VARCHAR(20) UNIQUE,
     store_code VARCHAR(50),
     store_title VARCHAR(100),

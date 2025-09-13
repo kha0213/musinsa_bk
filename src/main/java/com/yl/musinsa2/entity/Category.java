@@ -41,22 +41,18 @@ public class Category extends BaseEntity {
     @Column(nullable = false, length = 100)
     private String name;
 
-    @Column(length = 500)
+    @Column(length = 1000)
     private String description;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Category parent;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Category> children = new ArrayList<>();
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
     private Boolean isActive = true;
 
-    // 무신사 스타일 추가 필드들 (간소화됨)
     @Column(name = "code", unique = true, length = 20)
     private String code;
 
@@ -78,7 +74,10 @@ public class Category extends BaseEntity {
     @Builder.Default
     private GenderFilter genderFilter = GenderFilter.ALL;
 
-    // 편의 생성자들
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<Category> children = new ArrayList<>();
+
     public Category(String name, String description) {
         this.name = name;
         this.description = description;
@@ -90,8 +89,8 @@ public class Category extends BaseEntity {
         this(name, description);
         this.parent = parent;
     }
-
     // 유틸리티 메서드들
+
     public void addChild(Category child) {
         children.add(child);
         child.setParent(this);
@@ -101,13 +100,13 @@ public class Category extends BaseEntity {
         children.remove(child);
         child.setParent(null);
     }
-
     // 루트 카테고리인지 확인
+
     public boolean isRoot() {
         return parent == null;
     }
-
     // 리프 카테고리인지 확인 (자식이 없는지)
+
     public boolean isLeaf() {
         return children.isEmpty();
     }

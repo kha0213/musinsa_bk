@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7.2-alpine
+    container_name: musinsa-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - musinsa-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  app:
+    build: .
+    container_name: musinsa-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
+      - SPRING_REDIS_TIMEOUT=2000ms
+      - SPRING_REDIS_LETTUCE_POOL_MAX_ACTIVE=8
+      - SPRING_REDIS_LETTUCE_POOL_MAX_IDLE=8
+      - SPRING_REDIS_LETTUCE_POOL_MIN_IDLE=0
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - musinsa-network
+    volumes:
+      - app_logs:/app/logs
+
+volumes:
+  redis_data:
+    driver: local
+  app_logs:
+    driver: local
+
+networks:
+  musinsa-network:
+    driver: bridge
