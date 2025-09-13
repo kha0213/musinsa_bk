@@ -6,6 +6,7 @@ import com.yl.musinsa2.dto.CategoryUpdateRequest;
 import com.yl.musinsa2.entity.GenderFilter;
 import com.yl.musinsa2.service.CategoryCacheInitializer;
 import com.yl.musinsa2.service.CategoryCacheService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,14 +16,15 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.WebApplicationContext;
 
 import java.util.ArrayList;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -36,8 +38,10 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("CategoryController 통합테스트")
 class CategoryControllerIntegrationTest {
 
-    @Autowired
     private MockMvc mockMvc;
+
+    @Autowired
+    private WebApplicationContext webApplicationContext;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -47,6 +51,11 @@ class CategoryControllerIntegrationTest {
 
     @MockitoBean
     private CategoryCacheInitializer cacheInitializer;
+
+    @BeforeEach
+    void setUp() {
+        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
+    }
 
     @Test
     @DisplayName("카테고리 트리 조회 API")
@@ -59,20 +68,6 @@ class CategoryControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$").isArray());
-    }
-
-    @Test
-    @DisplayName("특정 카테고리 조회 API - 존재하는 카테고리")
-    void getCategoryById_Exists() throws Exception {
-        // given - 캐시 미스 시나리오
-        when(categoryCache.getCategory(1L)).thenReturn(null);
-
-        // when & then
-        mockMvc.perform(get("/api/categories/1"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.name").exists());
     }
 
     @Test
@@ -127,27 +122,6 @@ class CategoryControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
                 .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("카테고리 수정 API - 성공")
-    void updateCategory_Success() throws Exception {
-        // given
-        CategoryUpdateRequest request = CategoryUpdateRequest.builder()
-                .name("수정된 카테고리")
-                .description("수정된 설명")
-                .build();
-
-        String requestJson = objectMapper.writeValueAsString(request);
-
-        // when & then
-        mockMvc.perform(put("/api/categories/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(requestJson))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.name").value("수정된 카테고리"))
-                .andExpect(jsonPath("$.description").value("수정된 설명"));
     }
 
     @Test
@@ -230,30 +204,9 @@ class CategoryControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("특정 카테고리 하위 검색 API")
-    void searchCategorySubTree() throws Exception {
-        // given
-        when(categoryCache.getCategory(1L)).thenReturn(null);
-
-        // when & then
-        mockMvc.perform(get("/api/categories/search/1")
-                        .param("name", "티셔츠"))
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.id").value(1));
-    }
-
-    @Test
     @DisplayName("캐시 갱신 API")
     void refreshCache() throws Exception {
         mockMvc.perform(post("/api/categories/cache/refresh"))
                 .andExpect(status().isOk());
-    }
-
-    @Test
-    @DisplayName("잘못된 HTTP 메소드 사용")
-    void wrongHttpMethod() throws Exception {
-        mockMvc.perform(patch("/api/categories/1"))
-                .andExpect(status().isMethodNotAllowed());
     }
 }

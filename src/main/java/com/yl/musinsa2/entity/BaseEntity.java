@@ -3,6 +3,7 @@ package com.yl.musinsa2.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PreRemove;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.data.annotation.CreatedDate;
@@ -16,7 +17,7 @@ import java.time.LocalDateTime;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseEntity {
-    
+
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -24,4 +25,13 @@ public abstract class BaseEntity {
     @LastModifiedDate
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @LastModifiedDate
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    @PreRemove
+    protected void onSoftDelete() {
+        this.setDeletedAt(LocalDateTime.now());
+    }
 }

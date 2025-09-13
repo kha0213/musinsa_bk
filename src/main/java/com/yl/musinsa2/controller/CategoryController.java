@@ -5,7 +5,6 @@ import com.yl.musinsa2.dto.CategoryResponse;
 import com.yl.musinsa2.dto.CategoryUpdateRequest;
 import com.yl.musinsa2.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -49,7 +48,7 @@ public class CategoryController {
                 .body(categoryTree);
     }
 
-    @Operation(summary = "특정 카테고리 조회")
+    @Operation(summary = "특정 카테고리 조회 하위 정보 포함")
     @GetMapping("/{id}")
     public CategoryResponse getCategoryById(@PathVariable Long id) {
         return categoryService.getCategoryById(id);
@@ -64,8 +63,8 @@ public class CategoryController {
 
     @Operation(summary = "카테고리 정보 수정")
     @PutMapping("/{id}")
-    public CategoryResponse updateCategory(@PathVariable Long id, 
-                                         @Valid @RequestBody CategoryUpdateRequest request) {
+    public CategoryResponse updateCategory(@PathVariable Long id,
+                                           @Valid @RequestBody CategoryUpdateRequest request) {
         return categoryService.updateCategory(id, request);
     }
 

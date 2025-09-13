@@ -3,24 +3,31 @@ package com.yl.musinsa2.integration;
 import com.yl.musinsa2.entity.Category;
 import com.yl.musinsa2.entity.GenderFilter;
 import com.yl.musinsa2.repository.CategoryRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@DataJpaTest
+@SpringBootTest
 @ActiveProfiles("test")
 @DisplayName("CategoryRepository 통합테스트")
 class CategoryRepositoryIntegrationTest {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @BeforeEach
+    public void before() {
+        categoryRepository.deleteAll();
+    }
 
     @Test
     @DisplayName("카테고리 저장 및 조회")
@@ -50,12 +57,12 @@ class CategoryRepositoryIntegrationTest {
         // given
         Category parent = Category.builder()
                 .name("부모 카테고리")
-                .code("PARENT")
+                .code("PARENT001")
                 .build();
 
         Category child = Category.builder()
                 .name("자식 카테고리")
-                .code("CHILD")
+                .code("CHILD001")
                 .parent(parent)
                 .build();
 
@@ -76,17 +83,17 @@ class CategoryRepositoryIntegrationTest {
         // given
         Category root1 = Category.builder()
                 .name("루트1")
-                .code("ROOT1")
+                .code("ROOT_1")
                 .build();
 
         Category root2 = Category.builder()
                 .name("루트2")
-                .code("ROOT2")
+                .code("ROOT_2")
                 .build();
 
         Category child = Category.builder()
                 .name("자식")
-                .code("CHILD")
+                .code("CHILD3")
                 .parent(root1)
                 .build();
 
@@ -159,7 +166,7 @@ class CategoryRepositoryIntegrationTest {
         Optional<Category> foundParent = categoryRepository.findById(savedParent.getId());
         assertThat(foundParent).isPresent();
         assertThat(foundParent.get().getChildren()).hasSize(2);
-        
+
         // 자식들도 저장되었는지 확인
         assertThat(foundParent.get().getChildren())
                 .extracting(Category::getName)
@@ -182,7 +189,7 @@ class CategoryRepositoryIntegrationTest {
 
         // when & then
         categoryRepository.save(category1);
-        
+
         assertThatThrownBy(() -> {
             categoryRepository.save(category2);
             categoryRepository.flush(); // 즉시 DB에 반영하여 제약조건 확인
