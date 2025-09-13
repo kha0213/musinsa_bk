@@ -46,7 +46,7 @@ public class Category extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "parent_id")
     private Category parent;
 
@@ -71,7 +71,7 @@ public class Category extends BaseEntity {
     @Builder.Default
     private GenderFilter genderFilter = GenderFilter.ALL;
 
-    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Builder.Default
     private List<Category> children = new ArrayList<>();
 
@@ -85,8 +85,7 @@ public class Category extends BaseEntity {
         this(name, description);
         this.parent = parent;
     }
-
-    // 유틸리티 메서드들
+    
     public void addChild(Category child) {
         children.add(child);
         child.setParent(this);
@@ -96,18 +95,15 @@ public class Category extends BaseEntity {
         children.remove(child);
         child.setParent(null);
     }
-
-    // 루트 카테고리인지 확인
+    
     public boolean isRoot() {
         return parent == null;
     }
-
-    // 리프 카테고리인지 확인 (자식이 없는지)
+    
     public boolean isLeaf() {
         return children.isEmpty();
     }
 
-    // linkUrl getter - 항상 자동 생성
     public String getLinkUrl() {
         if (id != null) {
             return "/category/" + id;
@@ -115,16 +111,15 @@ public class Category extends BaseEntity {
         return null;
     }
 
-    // 스토어 관련 정보들을 위한 getter들
     public String getStoreIconImage() {
-        return null; // 제거됨
+        return null;
     }
 
     public String getStoreLinkUrl() {
-        return null; // 제거됨  
+        return null;
     }
 
     public String getLinkUrlTitle() {
-        return "전체 보기"; // 기본값 반환
+        return "전체 보기";
     }
 }
