@@ -19,6 +19,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
+import org.hibernate.annotations.SoftDelete;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ import java.util.List;
 @Builder
 @Accessors(chain = true)
 @ToString(exclude = {"parent", "children"})
+@SoftDelete(columnName = "deleted")
 public class Category extends BaseEntity {
 
     @Id
@@ -44,14 +46,9 @@ public class Category extends BaseEntity {
     @Column(length = 1000)
     private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parent;
-
-
-    @Column(name = "is_active", nullable = false)
-    @Builder.Default
-    private Boolean isActive = true;
 
     @Column(name = "code", unique = true, length = 20)
     private String code;
@@ -81,7 +78,6 @@ public class Category extends BaseEntity {
     public Category(String name, String description) {
         this.name = name;
         this.description = description;
-        this.isActive = true;
         this.genderFilter = GenderFilter.ALL;
     }
 
@@ -89,8 +85,8 @@ public class Category extends BaseEntity {
         this(name, description);
         this.parent = parent;
     }
-    // 유틸리티 메서드들
 
+    // 유틸리티 메서드들
     public void addChild(Category child) {
         children.add(child);
         child.setParent(this);
@@ -100,13 +96,13 @@ public class Category extends BaseEntity {
         children.remove(child);
         child.setParent(null);
     }
-    // 루트 카테고리인지 확인
 
+    // 루트 카테고리인지 확인
     public boolean isRoot() {
         return parent == null;
     }
-    // 리프 카테고리인지 확인 (자식이 없는지)
 
+    // 리프 카테고리인지 확인 (자식이 없는지)
     public boolean isLeaf() {
         return children.isEmpty();
     }

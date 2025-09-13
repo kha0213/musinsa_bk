@@ -17,15 +17,12 @@ public class CategoryRepositoryImpl implements CategoryRepositoryCustom {
     private final QCategory category = QCategory.category;
 
     @Override
-    public List<Category> findAllByIsActiveTrueAndGenderFilterIncludingAll(GenderFilter genderFilter) {
+    public List<Category> findAllByGenderFilterIncludingAll(GenderFilter genderFilter) {
         return queryFactory
                 .selectFrom(category)
                 .where(
-                    category.isActive.eq(true)
-                    .and(
-                        category.genderFilter.eq(GenderFilter.ALL)
-                        .or(category.genderFilter.eq(genderFilter))
-                    )
+                    category.genderFilter.eq(GenderFilter.ALL)
+                    .or(category.genderFilter.eq(genderFilter))
                 )
                 .orderBy(category.displayOrder.asc())
                 .fetch();
@@ -40,10 +37,7 @@ public class CategoryRepositoryImpl implements CategoryRepositoryCustom {
         // 먼저 루트 카테고리를 가져옵니다
         Category root = queryFactory
                 .selectFrom(category)
-                .where(
-                    category.id.eq(categoryId)
-                    .and(category.isActive.eq(true))
-                )
+                .where(category.id.eq(categoryId))
                 .fetchOne();
         
         if (root == null) {
@@ -58,10 +52,7 @@ public class CategoryRepositoryImpl implements CategoryRepositoryCustom {
         // 직접적인 자식들을 가져옵니다
         List<Category> directChildren = queryFactory
                 .selectFrom(category)
-                .where(
-                    category.parent.id.eq(parentId)
-                    .and(category.isActive.eq(true))
-                )
+                .where(category.parent.id.eq(parentId))
                 .orderBy(category.displayOrder.asc(), category.name.asc())
                 .fetch();
         

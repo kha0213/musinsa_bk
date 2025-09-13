@@ -61,9 +61,6 @@ public class CategoryResponse {
     @Schema(description = "수정 일시", example = "2024-01-15T10:30:00")
     private LocalDateTime updatedAt;
 
-    @Schema(description = "활성화 상태", example = "true")
-    private Boolean isActive;
-
     @Schema(description = "루트 카테고리 여부", example = "true")
     private boolean isRoot;
 
@@ -83,7 +80,6 @@ public class CategoryResponse {
         this.genderFilter = category.getGenderFilter();
         this.createdAt = category.getCreatedAt();
         this.updatedAt = category.getUpdatedAt();
-        this.isActive = category.getIsActive();
         this.isRoot = category.isRoot();
         this.leaf = category.isLeaf();
 
@@ -122,7 +118,6 @@ public class CategoryResponse {
                 .parentName(dto.getParentName())
                 .createdAt(dto.getCreatedAt())
                 .updatedAt(dto.getUpdatedAt())
-                .isActive(dto.getIsActive())
                 .isRoot(dto.getParentId() == null)
                 .leaf(dto.getChildren() == null || dto.getChildren().isEmpty())
                 .build();

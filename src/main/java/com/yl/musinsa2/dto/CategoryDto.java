@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class CategoryDto implements Serializable {
-    
+
     private Long id;
     private String name;
     private String description;
@@ -34,9 +34,8 @@ public class CategoryDto implements Serializable {
     private List<CategoryDto> children;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private Boolean isActive;
     private Integer sortOrder;
-    
+
     public static CategoryDto from(Category category) {
         CategoryDtoBuilder builder = CategoryDto.builder()
                 .id(category.getId())
@@ -50,28 +49,26 @@ public class CategoryDto implements Serializable {
                 .genderFilter(category.getGenderFilter())
                 .createdAt(category.getCreatedAt())
                 .updatedAt(category.getUpdatedAt())
-                .isActive(category.getIsActive())
                 .sortOrder(category.getDisplayOrder() != null ? category.getDisplayOrder() : 0);
-        
+
         if (category.getParent() != null) {
             builder.parentId(category.getParent().getId())
-                   .parentName(category.getParent().getName());
+                    .parentName(category.getParent().getName());
         }
-        
+
         return builder.build();
     }
-    
+
     public static CategoryDto fromWithChildren(Category category) {
         CategoryDto dto = from(category);
-        
+
         if (category.getChildren() != null && !category.getChildren().isEmpty()) {
             List<CategoryDto> children = category.getChildren().stream()
-                    .filter(Category::getIsActive)
                     .map(CategoryDto::fromWithChildren)
                     .collect(Collectors.toList());
             dto.setChildren(children);
         }
-        
+
         return dto;
     }
 }

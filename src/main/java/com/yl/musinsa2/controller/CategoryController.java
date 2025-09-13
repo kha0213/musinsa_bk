@@ -2,7 +2,6 @@ package com.yl.musinsa2.controller;
 
 import com.yl.musinsa2.dto.CategoryCreateRequest;
 import com.yl.musinsa2.dto.CategoryResponse;
-import com.yl.musinsa2.dto.CategoryStatistics;
 import com.yl.musinsa2.dto.CategoryUpdateRequest;
 import com.yl.musinsa2.service.CategoryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -21,7 +20,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -100,7 +98,6 @@ public class CategoryController {
                                               "children": null,
                                               "createdAt": "2024-01-15T10:30:00",
                                               "updatedAt": "2024-01-15T10:30:00",
-                                              "isActive": true,
                                               "root": false,
                                               "leaf": true
                                             }
@@ -153,7 +150,7 @@ public class CategoryController {
 
     @Operation(
             summary = "카테고리 정보 수정",
-            description = "기존 카테고리의 이름, 설명, 활성화 상태를 수정합니다."
+            description = "기존 카테고리의 이름, 설명을 수정합니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "수정 성공"),
@@ -172,8 +169,7 @@ public class CategoryController {
                                     value = """
                                             {
                                               "name": "수정된 카테고리명",
-                                              "description": "수정된 카테고리 설명",
-                                              "isActive": true
+                                              "description": "수정된 카테고리 설명"
                                             }
                                             """
                             )
@@ -187,8 +183,8 @@ public class CategoryController {
     }
 
     @Operation(
-            summary = "카테고리 삭제 (논리적)",
-            description = "카테고리를 논리적으로 삭제합니다(비활성화). 하위 카테고리가 있는 경우 삭제할 수 없습니다."
+            summary = "카테고리 삭제 (Soft Delete)",
+            description = "카테고리를 소프트 삭제합니다. Hibernate의 @SoftDelete 어노테이션이 자동으로 deleted=true로 설정합니다. 하위 카테고리가 있는 경우 삭제할 수 없습니다."
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "삭제 성공"),
@@ -308,56 +304,6 @@ public class CategoryController {
                         .cachePublic()
                         .mustRevalidate())
                 .body(category);
-    }
-
-    @Operation(
-            summary = "카테고리 활성화 상태 토글",
-            description = "카테고리의 활성화 상태를 토글합니다. 활성화된 카테고리는 비활성화되고, 비활성화된 카테고리는 활성화됩니다."
-    )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "상태 변경 성공"),
-            @ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없음", ref = "#/components/responses/NotFound")
-    })
-    @PatchMapping("/{id}/toggle-status")
-    public CategoryResponse toggleCategoryStatus(
-            @Parameter(description = "상태를 변경할 카테고리 ID", example = "1")
-            @PathVariable Long id) {
-        log.info("카테고리 상태 토글 요청, ID: {}", id);
-        CategoryResponse updatedCategory = categoryService.toggleCategoryStatus(id);
-        log.info("카테고리 상태 변경 완료: {} -> {}", id, updatedCategory.getIsActive());
-        return updatedCategory;
-    }
-
-    @Operation(
-            summary = "카테고리 통계 조회",
-            description = "전체 카테고리 수, 루트 카테고리 수, 하위 카테고리 수 등의 통계 정보를 조회합니다."
-    )
-    @ApiResponses({
-            @ApiResponse(
-                    responseCode = "200",
-                    description = "통계 조회 성공",
-                    content = @Content(
-                            mediaType = "application/json",
-                            examples = @ExampleObject(
-                                    name = "통계 응답 예시",
-                                    value = """
-                                            {
-                                              "totalCategories": 31,
-                                              "rootCategories": 5,
-                                              "subCategories": 26
-                                            }
-                                            """
-                            )
-                    )
-            )
-    })
-    @GetMapping("/statistics")
-    public CategoryStatistics getCategoryStatistics() {
-        log.info("카테고리 통계 조회 요청");
-        CategoryStatistics statistics = categoryService.getCategoryStatistics();
-        log.info("카테고리 통계 조회 완료 - 전체: {}, 루트: {}",
-                statistics.getTotalCategories(), statistics.getRootCategories());
-        return statistics;
     }
 
     @Operation(

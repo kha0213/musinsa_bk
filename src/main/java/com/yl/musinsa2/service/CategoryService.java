@@ -3,7 +3,6 @@ package com.yl.musinsa2.service;
 import com.yl.musinsa2.dto.CategoryCreateRequest;
 import com.yl.musinsa2.dto.CategoryDto;
 import com.yl.musinsa2.dto.CategoryResponse;
-import com.yl.musinsa2.dto.CategoryStatistics;
 import com.yl.musinsa2.dto.CategoryUpdateRequest;
 import com.yl.musinsa2.entity.Category;
 import com.yl.musinsa2.repository.CategoryRepository;
@@ -28,7 +27,7 @@ public class CategoryService {
     private final CategoryCacheInitializer cacheInitializer;
 
     /**
-     * 모든 활성화된 카테고리 조회 (캐시 우선)
+     * 모든 카테고리 조회 (캐시 우선)
      */
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAllCategories() {
@@ -44,7 +43,7 @@ public class CategoryService {
 
         if (categories.isEmpty()) {
             log.warn("캐시에서 카테고리를 찾을 수 없음. DB에서 직접 조회");
-            List<Category> dbCategories = categoryRepository.findByIsActiveTrue();
+            List<Category> dbCategories = categoryRepository.findAll();
             return dbCategories.stream()
                     .map(CategoryResponse::from)
                     .collect(Collectors.toList());
@@ -74,7 +73,7 @@ public class CategoryService {
 
         if (rootCategories.isEmpty()) {
             log.warn("캐시에서 루트 카테고리를 찾을 수 없음. DB에서 직접 조회");
-            List<Category> dbRootCategories = categoryRepository.findByParentIsNullAndIsActiveTrue();
+            List<Category> dbRootCategories = categoryRepository.findByParentIsNull();
             return dbRootCategories.stream()
                     .map(CategoryResponse::fromWithChildren)
                     .collect(Collectors.toList());
@@ -161,10 +160,6 @@ public class CategoryService {
         category.setName(request.getName());
         category.setDescription(request.getDescription());
 
-        if (request.getIsActive() != null) {
-            category.setIsActive(request.getIsActive());
-        }
-
         Category updatedCategory = categoryRepository.save(category);
         log.info("카테고리 DB 수정 완료: {}", updatedCategory.getName());
 
@@ -177,7 +172,7 @@ public class CategoryService {
     }
 
     /**
-     * 카테고리 삭제 (논리적 삭제) (DB + 캐시 업데이트)
+     * 카테고리 삭제
      */
     public void deleteCategory(Long id) {
         log.debug("카테고리 삭제 시작, ID: {}", id);
@@ -192,11 +187,11 @@ public class CategoryService {
 
         CategoryDto categoryDto = CategoryDto.from(category);
 
-        category.setIsActive(false);
-        categoryRepository.save(category);
-        log.info("카테고리 DB 삭제 완료: {}", category.getName());
+        // Hibernate @SoftDelete가 자동으로 deleted=true로 설정
+        categoryRepository.delete(category);
+        log.info("카테고리 삭제 완료: {}", category.getName());
 
-        // 캐시에서 제거 (비활성화된 카테고리는 캐시에서 삭제)
+        // 캐시에서 제거
         categoryCache.removeCategory(categoryDto);
         log.info("카테고리 캐시 삭제 완료: {}", category.getName());
     }
@@ -208,12 +203,12 @@ public class CategoryService {
     public List<CategoryResponse> searchCategoriesByName(String name) {
         log.debug("카테고리 검색 시작, 키워드: {} (캐시 우선)", name);
 
-        // 캐시에서 모든 활성 카테고리 조회 후 필터링
+        // 캐시에서 모든 카테고리 조회 후 필터링
         List<CategoryDto> allCategories = categoryCache.getAllActiveCategories();
 
         if (allCategories.isEmpty()) {
             log.warn("캐시에서 카테고리를 찾을 수 없음. DB에서 직접 검색");
-            List<Category> categories = categoryRepository.findByNameContainingIgnoreCaseAndIsActiveTrue(name);
+            List<Category> categories = categoryRepository.findByNameContainingIgnoreCase(name);
             return categories.stream()
                     .map(CategoryResponse::from)
                     .collect(Collectors.toList());
@@ -244,7 +239,7 @@ public class CategoryService {
 
         if (rootCategories.isEmpty()) {
             log.warn("캐시에서 카테고리를 찾을 수 없음. DB에서 직접 조회");
-            List<Category> dbRootCategories = categoryRepository.findByParentIsNullAndIsActiveTrue();
+            List<Category> dbRootCategories = categoryRepository.findByParentIsNull();
             List<CategoryResponse> treeFromDb = dbRootCategories.stream()
                     .map(CategoryResponse::fromWithChildren)
                     .collect(Collectors.toList());
@@ -333,7 +328,6 @@ public class CategoryService {
                     .parentName(category.getParentName())
                     .createdAt(category.getCreatedAt())
                     .updatedAt(category.getUpdatedAt())
-                    .isActive(category.getIsActive())
                     .isRoot(category.isRoot())
                     .leaf(filteredChildren == null || filteredChildren.isEmpty())
                     .children(filteredChildren)
@@ -344,66 +338,12 @@ public class CategoryService {
     }
 
     /**
-     * 카테고리 활성화/비활성화 (DB + 캐시 업데이트)
-     */
-    public CategoryResponse toggleCategoryStatus(Long id) {
-        log.debug("카테고리 상태 토글 시작, ID: {}", id);
-
-        Category category = categoryRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + id));
-
-        boolean previousStatus = category.getIsActive();
-        category.setIsActive(!previousStatus);
-
-        Category updatedCategory = categoryRepository.save(category);
-        log.info("카테고리 상태 변경: {} -> {}", previousStatus, updatedCategory.getIsActive());
-
-        // 캐시 업데이트
-        CategoryDto categoryDto = CategoryDto.from(updatedCategory);
-        if (updatedCategory.getIsActive()) {
-            // 활성화된 경우 캐시에 추가
-            categoryCache.addCategory(categoryDto);
-        } else {
-            // 비활성화된 경우 캐시에서 제거
-            categoryCache.removeCategory(categoryDto);
-        }
-
-        return CategoryResponse.from(updatedCategory);
-    }
-
-    /**
      * 전체 카테고리 트리 구조 조회 (캐시 우선)
      */
     @Transactional(readOnly = true)
     public List<CategoryResponse> getCategoryTree() {
         log.debug("카테고리 트리 조회 시작 (캐시 우선)");
         return getRootCategories(); // 루트부터 시작하여 자식들까지 모두 포함
-    }
-
-    /**
-     * 카테고리 통계 정보 조회 (캐시 우선)
-     */
-    @Transactional(readOnly = true)
-    public CategoryStatistics getCategoryStatistics() {
-        log.debug("카테고리 통계 조회 시작 (캐시 우선)");
-
-        List<CategoryDto> allCategories = categoryCache.getAllActiveCategories();
-
-        if (allCategories.isEmpty()) {
-            log.warn("캐시에서 카테고리를 찾을 수 없음. DB에서 직접 조회");
-            long totalCount = categoryRepository.countByIsActiveTrue();
-            long rootCount = categoryRepository.findByParentIsNullAndIsActiveTrue().size();
-            return new CategoryStatistics(totalCount, rootCount);
-        }
-
-        long totalCount = allCategories.size();
-        long rootCount = allCategories.stream()
-                .filter(category -> category.getParentId() == null)
-                .count();
-
-        log.debug("캐시에서 카테고리 통계 - 전체: {}, 루트: {}, 하위: {}", totalCount, rootCount, totalCount - rootCount);
-
-        return new CategoryStatistics(totalCount, rootCount);
     }
 
     /**
