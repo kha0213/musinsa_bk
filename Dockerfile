@@ -6,11 +6,14 @@ WORKDIR /app
 COPY build.gradle settings.gradle ./
 COPY gradle gradle
 
+# Download dependencies first (better caching)
+RUN gradle dependencies --no-daemon
+
 # Copy source code
 COPY src src
 
-# Build application
-RUN gradle clean bootJar --no-daemon
+# Build application with clean
+RUN gradle clean bootJar --no-daemon --refresh-dependencies
 
 # Runtime stage
 FROM eclipse-temurin:21-jre-alpine

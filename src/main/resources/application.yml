@@ -26,16 +26,16 @@ spring:
         format_sql: true
   
   # Redis Configuration
-  redis:
-    host: localhost
-    port: 6379
-    timeout: 2000ms
-    jedis:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
-        max-wait: -1ms
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
   
   # SQL 초기화 설정 - 데이터가 없을 때만 실행
   sql:
@@ -46,6 +46,11 @@ spring:
       encoding: UTF-8
       separator: ;
       continue-on-error: false  # 오류 시 중단
+
+  # Spring MVC 설정
+  mvc:
+    favicon:
+      enabled: false
 
 # Swagger/OpenAPI 설정
 springdoc:
@@ -63,6 +68,7 @@ springdoc:
   show-actuator: false
   default-consumes-media-type: application/json
   default-produces-media-type: application/json
+
 
 # OpenFeign 설정
 feign:

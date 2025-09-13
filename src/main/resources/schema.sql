@@ -1,4 +1,4 @@
--- 카테고리 테이블 스키마 정의 (Soft Delete 적용 버전)
+-- 카테고리 테이블 스키마 정의
 CREATE TABLE IF NOT EXISTS categories (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(100) NOT NULL,
@@ -21,6 +21,4 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE INDEX IF NOT EXISTS idx_categories_parent_id ON categories(parent_id, display_order);
 CREATE INDEX IF NOT EXISTS idx_categories_name ON categories(name);
 CREATE INDEX IF NOT EXISTS idx_categories_code ON categories(code);
-
--- 복합 인덱스 (Soft Delete 관련 쿼리 최적화)
 CREATE INDEX IF NOT EXISTS idx_categories_parent_not_deleted ON categories(parent_id, deleted);

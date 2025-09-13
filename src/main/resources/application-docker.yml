@@ -80,3 +80,12 @@ management:
 cache:
   redis:
     ttl: 3600 # 1시간 (초 단위)
+
+# Swagger/OpenAPI 설정 (Docker 환경)
+springdoc:
+  api-docs:
+    enabled: true
+    path: /api-docs
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html

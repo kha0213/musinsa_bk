@@ -8,6 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -16,6 +17,16 @@ import java.util.Map;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    /**
+     * 정적 리소스 요청 실패 (예: favicon.ico)
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public void handleNoResourceFoundException(NoResourceFoundException ex) {
+        // favicon.ico 같은 정적 리소스 요청은 조용히 무시
+        log.debug("정적 리소스 누락: {}", ex.getResourcePath());
+        // 응답 없이 404 반환
+    }
     
     /**
      * 엔티티를 찾을 수 없는 경우
