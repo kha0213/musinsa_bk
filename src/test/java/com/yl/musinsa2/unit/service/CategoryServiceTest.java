@@ -147,7 +147,7 @@ class CategoryServiceTest {
         assertThat(result.getName()).isEqualTo("새 카테고리");
         assertThat(result.isRoot()).isTrue();
         verify(categoryRepository).save(any(Category.class));
-        verify(categoryCache).addCategory(any(CategoryDto.class));
+        verify(categoryCache).updateCategory(any(CategoryDto.class), isNull());
     }
 
     @Test
@@ -297,7 +297,7 @@ class CategoryServiceTest {
     void getCategoryTree_CacheMiss_FromDatabase() {
         // given
         when(categoryCache.getCategoryTree()).thenReturn(new ArrayList<>());
-        when(categoryRepository.findByParentIsNull()).thenReturn(List.of(testCategory));
+        when(categoryCache.loadAndCacheFromDB()).thenReturn(List.of(testCategoryDto));
 
         // when
         List<CategoryResponse> result = categoryService.getCategoryTree();
@@ -305,6 +305,6 @@ class CategoryServiceTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getName()).isEqualTo("테스트 카테고리");
-        verify(categoryRepository).findByParentIsNull();
+        verify(categoryCache).loadAndCacheFromDB();
     }
 }

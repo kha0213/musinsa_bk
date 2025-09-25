@@ -26,22 +26,85 @@ public class CategoryService {
     private final CategoryCacheService categoryCache;
     private final CategoryCacheInitializer cacheInitializer;
 
+    /**
+     * 개별 카테고리 조회 - category:id 사용
+     */
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(Long id) {
+        // 1. 개별 캐시에서 조회
         CategoryDto categoryDto = categoryCache.getCategory(id);
 
-        if (categoryDto == null) {
-            Category category = categoryRepository.findById(id)
-                    .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + id));
-            return CategoryResponse.fromWithChildren(category);
+        if (categoryDto != null) {
+            List<CategoryDto> children = categoryCache.getChildCategories(id);
+            categoryDto.setChildren(children);
+            return CategoryResponse.convertToResponseWithChildren(categoryDto);
         }
 
-        List<CategoryDto> children = categoryCache.getChildCategories(id);
-        categoryDto.setChildren(children);
+        // 2. 캐시 미스 시 DB에서 조회
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + id));
 
-        return CategoryResponse.convertToResponseWithChildren(categoryDto);
+        CategoryResponse response = CategoryResponse.fromWithChildren(category);
+
+        // 3. 캐시에 저장
+        CategoryDto dto = CategoryDto.from(category);
+        categoryCache.addCategory(dto);
+
+        return response;
     }
 
+    /**
+     * 전체 카테고리 트리 조회 - category:tree 사용
+     */
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> getCategoryTree() {
+        // 1. 트리 캐시에서 조회
+        List<CategoryDto> tree = categoryCache.getCategoryTree();
+
+        if (!tree.isEmpty()) {
+            return tree.stream()
+                    .map(CategoryResponse::convertToResponseWithChildren)
+                    .collect(Collectors.toList());
+        }
+
+        // 2. 캐시 미스 시 DB에서 로딩
+        List<CategoryDto> loadedTree = categoryCache.loadAndCacheFromDB();
+        return loadedTree.stream()
+                .map(CategoryResponse::convertToResponseWithChildren)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 카테고리 검색 - 트리에서 필터링
+     */
+    @Transactional(readOnly = true)
+    public List<CategoryResponse> searchCategoriesTree(String name) {
+        List<CategoryResponse> tree = getCategoryTree();
+
+        if (name == null || name.trim().isEmpty()) {
+            return tree;
+        }
+
+        return filterCategoryTree(tree, name);
+    }
+
+    /**
+     * 특정 카테고리의 서브트리 검색
+     */
+    @Transactional(readOnly = true)
+    public CategoryResponse searchCategorySubTree(Long categoryId, String name) {
+        CategoryResponse baseCategory = getCategoryById(categoryId);
+
+        if (name == null || name.trim().isEmpty()) {
+            return baseCategory;
+        }
+
+        return filterSingleCategoryTree(baseCategory, name);
+    }
+
+    /**
+     * 카테고리 생성 - 양쪽 캐시 업데이트
+     */
     public CategoryResponse createCategory(CategoryCreateRequest request) {
         Category category = Category.builder()
                 .name(request.getName())
@@ -61,13 +124,18 @@ public class CategoryService {
         }
 
         Category savedCategory = categoryRepository.save(category);
+        CategoryResponse response = CategoryResponse.from(savedCategory);
 
+        // 양쪽 캐시 업데이트
         CategoryDto categoryDto = CategoryDto.from(savedCategory);
-        categoryCache.addCategory(categoryDto);
+        categoryCache.updateCategory(categoryDto, null);
 
-        return CategoryResponse.from(savedCategory);
+        return response;
     }
 
+    /**
+     * 카테고리 수정 - 양쪽 캐시 업데이트
+     */
     public CategoryResponse updateCategory(Long id, CategoryUpdateRequest request) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + id));
@@ -78,14 +146,18 @@ public class CategoryService {
         category.setDescription(request.getDescription());
 
         Category updatedCategory = categoryRepository.save(category);
+        CategoryResponse response = CategoryResponse.from(updatedCategory);
 
+        // 양쪽 캐시 업데이트
         CategoryDto categoryDto = CategoryDto.from(updatedCategory);
         categoryCache.updateCategory(categoryDto, oldParentId);
 
-        return CategoryResponse.from(updatedCategory);
+        return response;
     }
 
-    // Hibernate @SoftDelete 자동 처리
+    /**
+     * 카테고리 삭제 - 양쪽 캐시에서 제거
+     */
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다. ID: " + id));
@@ -97,56 +169,21 @@ public class CategoryService {
         CategoryDto categoryDto = CategoryDto.from(category);
 
         categoryRepository.delete(category);
+
+        // 양쪽 캐시에서 제거
         categoryCache.removeCategory(categoryDto);
     }
 
-    @Transactional(readOnly = true)
-    public List<CategoryResponse> searchCategoriesTree(String name) {
-        List<CategoryDto> rootCategories = categoryCache.getCategoryTree();
-
-        if (rootCategories.isEmpty()) {
-            List<Category> dbRootCategories = categoryRepository.findByParentIsNull();
-            List<CategoryResponse> treeFromDb = dbRootCategories.stream()
-                    .map(CategoryResponse::fromWithChildren)
-                    .collect(Collectors.toList());
-
-            if (name != null && !name.trim().isEmpty()) {
-                return filterCategoryTree(treeFromDb, name);
-            }
-            return treeFromDb;
-        }
-
-        List<CategoryResponse> tree = rootCategories.stream()
-                .map(CategoryResponse::convertToResponseWithChildren)
-                .collect(Collectors.toList());
-
-        if (name != null && !name.trim().isEmpty()) {
-            tree = filterCategoryTree(tree, name);
-        }
-
-        return tree;
-    }
-
-    @Transactional(readOnly = true)
-    public CategoryResponse searchCategorySubTree(Long categoryId, String name) {
-        CategoryResponse baseCategory = getCategoryById(categoryId);
-
-        if (name == null || name.trim().isEmpty()) {
-            return baseCategory;
-        }
-
-        return filterSingleCategoryTree(baseCategory, name);
-    }
-
-    @Transactional(readOnly = true)
-    public List<CategoryResponse> getCategoryTree() {
-        return searchCategoriesTree(null);
-    }
-
+    /**
+     * 캐시 수동 갱신
+     */
     public void refreshCache() {
         cacheInitializer.reinitializeCache();
     }
 
+    /**
+     * 트리에서 카테고리 필터링
+     */
     private List<CategoryResponse> filterCategoryTree(List<CategoryResponse> categories, String name) {
         return categories.stream()
                 .map(category -> filterSingleCategoryTree(category, name))
@@ -154,6 +191,9 @@ public class CategoryService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * 단일 카테고리 트리 필터링
+     */
     private CategoryResponse filterSingleCategoryTree(CategoryResponse category, String name) {
         boolean currentMatches = category.getName().toLowerCase().contains(name.toLowerCase());
 

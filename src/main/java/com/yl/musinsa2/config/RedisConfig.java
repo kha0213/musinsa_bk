@@ -20,17 +20,35 @@ import java.time.Duration;
 @Configuration
 @EnableCaching
 public class RedisConfig {
-    
+
     @Bean
     public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
-        
+
         // Key 직렬화 설정
         template.setKeySerializer(new StringRedisSerializer());
         template.setHashKeySerializer(new StringRedisSerializer());
-        
+
         // Value 직렬화 설정
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        template.setValueSerializer(serializer);
+        template.setHashValueSerializer(serializer);
+
+        template.afterPropertiesSet();
+        return template;
+    }
+
+    // 개별 카테고리용 RedisTemplate
+    @Bean("categoryRedisTemplate")
+    public RedisTemplate<String, Object> categoryRedisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+        
+        // 타입 정보 포함한 직렬화
         GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
         template.setValueSerializer(serializer);
         template.setHashValueSerializer(serializer);
@@ -39,6 +57,22 @@ public class RedisConfig {
         return template;
     }
     
+    // 트리용 RedisTemplate
+    @Bean("treeRedisTemplate")
+    public RedisTemplate<String, Object> treeRedisTemplate(RedisConnectionFactory connectionFactory, ObjectMapper objectMapper) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        template.setConnectionFactory(connectionFactory);
+        
+        template.setKeySerializer(new StringRedisSerializer());
+        
+        // 타입 정보 포함한 직렬화 - 복잡한 객체도 안전하게 처리
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(objectMapper);
+        template.setValueSerializer(serializer);
+        
+        template.afterPropertiesSet();
+        return template;
+    }
+
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();

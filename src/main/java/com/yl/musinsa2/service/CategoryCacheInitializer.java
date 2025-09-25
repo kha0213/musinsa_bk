@@ -24,19 +24,13 @@ public class CategoryCacheInitializer {
         log.info("카테고리 캐시 초기화 시작...");
         
         try {
-            // 기존 캐시 초기화
+            // 기존 캐시 모두 초기화
             categoryCache.clearAllCache();
             
-            // DB에서 모든 카테고리 조회
-            List<Category> allCategories = categoryRepository.findAll();
+            // DB에서 전체 트리 로딩 및 양쪽 캐시에 저장
+            List<CategoryDto> tree = categoryCache.loadAndCacheFromDB();
             
-            // 캐시에 저장
-            for (Category category : allCategories) {
-                CategoryDto categoryDto = CategoryDto.from(category);
-                categoryCache.addCategory(categoryDto);
-            }
-            
-            log.info("카테고리 캐시 초기화 완료 - 총 {} 개의 카테고리", allCategories.size());
+            log.info("카테고리 캐시 초기화 완료 - 총 {} 개의 루트 카테고리", tree.size());
             
         } catch (Exception e) {
             log.error("카테고리 캐시 초기화 실패", e);

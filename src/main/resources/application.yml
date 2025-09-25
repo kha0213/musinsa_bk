@@ -112,6 +112,10 @@ management:
 # Logging
 logging:
   level:
+    org.springframework.cache: DEBUG
+    org.springframework.data.redis: DEBUG
+    com.yl.musinsa2.service.CategoryCacheService: DEBUG
+    com.yl.musinsa2.cache: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: TRACE
     com.yl.musinsa2.client: DEBUG  # Feign 클라이언트 로그
